@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: GortzTools
+Version: 0.1
+Summary: Tools for storing json data into mysql database
+Home-page: https://github.com/Adddrian/GortzTools
+Author: Adrian Gortzak
+Author-email: addegor95@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
