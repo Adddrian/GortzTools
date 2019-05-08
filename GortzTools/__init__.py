@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
@@ -27,7 +25,64 @@ def flatten_json(y):
 def get_redirect_url(url):
     r = requests.get(url)
     return r.url
+
+
+def simple_update_or_create(mydb,keys,table,valDictionary):
+        mycursor = mydb.cursor()
+        tries=3
+        while tries > 0:
+                tries -= 1
+                try:
+                        keyString=""
+                        for keyColumn in keys.keys():
+                            keyString= keyString + " " + keyColumn + "=\"" + str(keys.get(keyColumn))+"\""
+                        checkIfKeyExists="select count(*) from " + table + " where" + keyString
+                        #print(checkIfKeyExists)
+                        mycursor.execute(checkIfKeyExists)
+                        matchingValues= mycursor.fetchall()[0][0]
+                        #print("maching lines " + str(matchingValues))
+                        if matchingValues == 0:
+                            # CREATE
+                            for keyColumn in keys.keys():
+                                valDictionary[keyColumn]=str(keys.get(keyColumn))
+                                #print(valDictionary)
+                                simple_insert(mydb,'insert',table,valDictionary)
+                                print("CREATED")
+
+                        if matchingValues == 1:
+                            # UPDATE
+                            sqlUpdate="update "+table+ " set"
+                            firstLoop=True
+                            for fields in valDictionary.keys():
+                                if firstLoop == True:
+                                    sqlUpdate = sqlUpdate + " " + fields +"=\""+str(valDictionary.get(fields))+"\""
+                                    firstLoop=False
+                                else:
+                                    sqlUpdate = sqlUpdate + ", " + fields +"=\""+str(valDictionary.get(fields))+"\""
+                            sqlUpdate = sqlUpdate + " WHERE"
+                            firstLoop=True
+                            for keyColumn in keys.keys():
+                                if firstLoop==True:
+                                    sqlUpdate = sqlUpdate + " " + keyColumn +"=\""+str(keys.get(keyColumn))+"\""
+                                else:
+                                    sqlUpdate = sqlUpdate + " AND " + keyColumn +"=\""+str(keys.get(keyColumn))+"\""
+                            #print(sqlUpdate)
+                            mycursor.execute(sqlUpdate)
+                            print("UPDATED")
+                        if matchingValues > 1:
+                            print("[no add error] more then one match")
+                            
+
+                        break
+                except Exception as e:
+                        if tries == 0:
+                                #print(sqlQuery)
+                                print("[No add error] Failed inserting data after retrying. Error message:"+str(e))
+                        else:
+                                print("Reconnecting..")
+                                mydb.reconnect()
     
+
 
 def simple_insert(mydb, insertMethod, table, valDictionary):
         mycursor = mydb.cursor()
@@ -47,7 +102,7 @@ def simple_insert(mydb, insertMethod, table, valDictionary):
                         #print(dataValues)
                         mycursor.execute(sqlQuery,dataValues)
                         mydb.commit()
-                        print("Data Uppdated!")
+                        print("Data Updated!")
                         break
                 except Exception as e:
                         if tries == 0:
